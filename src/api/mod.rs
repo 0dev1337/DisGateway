@@ -1,1 +1,2 @@
-pub mod guilds;
+pub mod disboard;
+pub mod discord;

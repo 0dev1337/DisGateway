@@ -38,3 +38,26 @@ pub fn create_server(count: i64, token : &str) -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
+
+
+pub fn delete_server(id: &str, token : &str) -> Result<(), Box<dyn Error>> {
+    let client = Client::new();
+    let body = json!({});
+
+    let response = client
+        .post(format!("https://discord.com/api/v9/guilds/{}/delete",id))
+        .headers(build_discord_headers(token))
+        .json(&body)
+        .send()?;
+
+    if response.status().as_u16() == 429 {
+        let body = response.text()?;
+        let parsed: RateLimitResponse = serde_json::from_str(&body)?;
+        println!("Ratelimited for {:?} seconds.... Sleeping", parsed.retry_after);
+        sleep(Duration::from_secs_f64(parsed.retry_after));
+        delete_server(id,token)?; // retry
+    } else if response.status().as_u16() == 204 {
+        println!("Successfully Deleted Server - ID : {}", id);
+    }
+    Ok(())
+}
